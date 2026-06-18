@@ -18,7 +18,23 @@ FILE_IN_ZIP = "xd/clues.tsv"
 OUTPUT_CSV = "scored_words.csv"
 
 
-def main(output_csv=OUTPUT_CSV):
+def main():
+    args = parse_args()
+    run(args.output)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "-o",
+        "--output",
+        default=OUTPUT_CSV,
+        help=f"output CSV file name (default: {OUTPUT_CSV})",
+    )
+    return parser.parse_args()
+
+
+def run(output_csv=OUTPUT_CSV):
     df = load_clues(URL, FILE_IN_ZIP)
     df = count_answers(df)
     df = filter_ascii_words(df)
@@ -70,12 +86,4 @@ def add_scores(df):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "-o",
-        "--output",
-        default=OUTPUT_CSV,
-        help=f"output CSV file name (default: {OUTPUT_CSV})",
-    )
-    args = parser.parse_args()
-    main(args.output)
+    main()
