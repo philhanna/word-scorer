@@ -1,0 +1,16 @@
+[project]
+name = "word-scorer"
+version = "0.1.0"
+description = "Creates a dictionary of words scored for acceptability in crossword puzzles"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+authors = [{ name = "Phil Hanna", email = "ph1204@gmail.com" }]
+dependencies = [
+    "numpy>=2.0",
+    "pandas>=2.0",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+notebook = ["ipykernel>=6"]
