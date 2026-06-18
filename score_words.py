@@ -104,8 +104,8 @@ def load_clues(zip_url, file_in_zip):
         with zf.open(file_in_zip) as f:
             tsv_content = f.read().decode("utf-8")
 
-    # on_bad_lines="warn" skips malformed rows instead of aborting the load.
-    df = pd.read_csv(io.StringIO(tsv_content), sep="\t", on_bad_lines="warn")
+    # on_bad_lines="skip" silently drops malformed rows instead of aborting.
+    df = pd.read_csv(io.StringIO(tsv_content), sep="\t", on_bad_lines="skip")
     logger.info(
         "Loaded '%s' into a DataFrame with %d rows and %d columns",
         file_in_zip,
