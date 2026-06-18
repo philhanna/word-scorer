@@ -1,4 +1,4 @@
-"""Create a dictionary of words scored for acceptability in crossword puzzles.
+"""Creates a dictionary of words scored for acceptability in crossword puzzles.
 
 Downloads the xd crossword clue corpus, counts how often each answer has
 been used, and assigns each word a log-scaled acceptability score.
