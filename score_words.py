@@ -1,6 +1,6 @@
 """Creates a dictionary of words scored for acceptability in crossword puzzles.
 
-Downloads the xd crossword clue corpus, counts how often each answer has
+Downloads the xd crossword clue corpus, counts how often each word has
 been used, and assigns each word a log-scaled acceptability score.
 """
 
@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-# Source corpus: a zip of every clue/answer published in the xd archive.
+# Source corpus: a zip of every clue/word published in the xd archive.
 URL = "https://xd.saul.pw/xd-clues.zip"
 
 # Path of the tab-separated clue file inside that zip.
@@ -71,7 +71,7 @@ def run(output_csv=OUTPUT_CSV):
     logger.info("Starting word-scoring pipeline")
     df = load_clues(URL, FILE_IN_ZIP)
     df = filter_ascii_words(df)
-    df = count_answers(df)
+    df = count_words(df)
     df = add_scores(df)
     logger.info("Writing %d scored words to %s", len(df), output_csv)
     df.to_csv(output_csv, index=False)
@@ -87,7 +87,7 @@ def load_clues(zip_url, file_in_zip):
 
     Returns:
         A DataFrame of the raw clues; each row is a single published clue,
-        including its ``answer`` column.
+        including its ``word`` column.
 
     Raises:
         requests.HTTPError: If the download returns an error status code.
@@ -106,28 +106,13 @@ def load_clues(zip_url, file_in_zip):
 
     # on_bad_lines="skip" silently drops malformed rows instead of aborting.
     df = pd.read_csv(io.StringIO(tsv_content), sep="\t", on_bad_lines="skip")
+    df = df.rename(columns={"answer": "word"})
     logger.info(
         "Loaded '%s' into a DataFrame with %d rows and %d columns",
         file_in_zip,
         len(df),
         len(df.columns),
     )
-    return df
-
-
-def count_answers(df):
-    """Collapse the clue rows to one row per answer with a usage count.
-
-    Args:
-        df: Raw clues DataFrame containing an ``answer`` column.
-
-    Returns:
-        A DataFrame with a ``word`` column (the former ``answer``) and a
-        ``count`` of how many times each word appeared as an answer.
-    """
-    df = df.groupby(["answer"]).size().reset_index(name="count")
-    df = df.rename(columns={"answer": "word"})
-    logger.info("Collapsed clues to %d distinct words", len(df))
     return df
 
 
@@ -138,12 +123,12 @@ def filter_ascii_words(df):
     characters, as well as any non-string values.
 
     Args:
-        df: DataFrame with a ``word`` column.
+        df: DataFrame with an ``answer`` column.
 
     Returns:
         A copy of ``df`` filtered to plain A-Z words.
     """
-    mask = df["word"].apply(
+    mask = df["answer"].apply(
         lambda x: isinstance(x, str) and bool(re.fullmatch(r"[A-Z]+", x))
     )
     # .copy() detaches the slice so later assignments don't warn or alias df.
@@ -155,6 +140,21 @@ def filter_ascii_words(df):
         len(df) - len(filtered),
     )
     return filtered
+
+
+def count_words(df):
+    """Collapse the clue rows to one row per word with a usage count.
+
+    Args:
+        df: Raw clues DataFrame containing an ``word`` column.
+
+    Returns:
+        A DataFrame with a ``word`` column and a ``count`` of
+        how many times each word.
+    """
+    df = df.groupby(["answer"]).size().reset_index(name="count")
+    logger.info("Collapsed clues to %d distinct words", len(df))
+    return df
 
 
 def add_scores(df):
@@ -177,9 +177,7 @@ def add_scores(df):
     """
     count_max = df["count"].max()
     df["score"] = np.log(df["count"] + 1) / np.log(count_max + 1)
-    logger.info(
-        "Scored %d words (max count %d scores 1.0)", len(df), count_max
-    )
+    logger.info("Scored %d words (max count %d scores 1.0)", len(df), count_max)
     return df
 
 
