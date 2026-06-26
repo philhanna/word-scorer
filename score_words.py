@@ -70,8 +70,8 @@ def run(output_csv=OUTPUT_CSV):
     """
     logger.info("Starting word-scoring pipeline")
     df = load_clues(URL, FILE_IN_ZIP)
-    df = count_answers(df)
     df = filter_ascii_words(df)
+    df = count_answers(df)
     df = add_scores(df)
     logger.info("Writing %d scored words to %s", len(df), output_csv)
     df.to_csv(output_csv, index=False)

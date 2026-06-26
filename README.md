@@ -13,13 +13,13 @@ four steps:
    archive](https://xd.saul.pw/xd-clues.zip) and reads `xd/clues.tsv`, which
    contains one row per clue/answer ever published in the corpus.
 
-2. **Count usage per answer.** The clues are grouped by answer to get a `count`
-   of how many times each word has been used, and the `answer` column is
-   renamed to `word`.
-
-3. **Filter to plain words.** Only answers made up entirely of uppercase ASCII
+2. **Filter to plain words.** Only answers made up entirely of uppercase ASCII
    letters (`A`–`Z`) are kept. Entries with digits, punctuation, or
    non-English characters are discarded.
+
+3. **Count usage per answer.** The clues are grouped by answer to get a `count`
+   of how many times each word has been used, and the `answer` column is
+   renamed to `word`.
 
 4. **Assign a log-scaled score.** Word usage follows Zipf's law: a handful of
    words are used constantly while most are used rarely. A raw count would make
