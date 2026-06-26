@@ -33,6 +33,7 @@ def main():
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     run(args.output)
 
@@ -71,12 +72,26 @@ def run(output_csv=OUTPUT_CSV):
     logger.info("Starting word-scoring pipeline")
     df = load_clues(URL, FILE_IN_ZIP)
     df = filter_ascii_words(df)
+    df = add_lengths(df)
     df = count_words(df)
     df = add_scores(df)
+    df = sort_words(df)
     logger.info("Writing %d scored words to %s", len(df), output_csv)
     df.to_csv(output_csv, index=False)
     logger.info("Done")
 
+def add_lengths(df):
+    """Add a ``length`` column containing the length of each ``word`` value.
+
+    Args:
+        df: DataFrame with a ``word`` column.
+
+    Returns:
+        The same DataFrame with a new integer ``length`` column.
+    """
+    df["length"] = df["word"].str.len()
+    logger.info("Added length column for %d words", len(df))
+    return df
 
 def load_clues(zip_url, file_in_zip):
     """Download a zip archive and read one TSV member into a DataFrame.
@@ -128,7 +143,7 @@ def filter_ascii_words(df):
     Returns:
         A copy of ``df`` filtered to plain A-Z words.
     """
-    mask = df["answer"].apply(
+    mask = df["word"].apply(
         lambda x: isinstance(x, str) and bool(re.fullmatch(r"[A-Z]+", x))
     )
     # .copy() detaches the slice so later assignments don't warn or alias df.
@@ -146,13 +161,12 @@ def count_words(df):
     """Collapse the clue rows to one row per word with a usage count.
 
     Args:
-        df: Raw clues DataFrame containing an ``word`` column.
+        df: Raw clues DataFrame containing ``word`` and ``length`` columns.
 
     Returns:
-        A DataFrame with a ``word`` column and a ``count`` of
-        how many times each word.
+        A DataFrame with ``word``, ``length``, and ``count`` columns.
     """
-    df = df.groupby(["answer"]).size().reset_index(name="count")
+    df = df.groupby(["word", "length"]).size().reset_index(name="count")
     logger.info("Collapsed clues to %d distinct words", len(df))
     return df
 
@@ -171,15 +185,32 @@ def add_scores(df):
     current word. The +1 keeps the logarithm defined for a count of zero.
 
     Args:
-        df: DataFrame with ``word`` and ``count`` columns.
+        df: DataFrame with ``word``, ``length``, and ``count`` columns.
 
     Returns:
         The same DataFrame with a new ``score`` column.
     """
-    count_max = df["word"].str.len().map(df["word"].str.len().value_counts())
+    count_max = df["length"].map(df["length"].value_counts())
     df["score"] = np.log(df["count"] + 1) / np.log(count_max + 1)
     logger.info("Scored %d words using same-length word counts", len(df))
     return df
+
+
+def sort_words(df):
+    """Sort words by length, then score descending, then alphabetically.
+
+    Args:
+        df: DataFrame with ``word``, ``length``, and ``score`` columns.
+
+    Returns:
+        A sorted copy of ``df``.
+    """
+    sorted_df = df.sort_values(
+        by=["length", "score", "word"],
+        ascending=[True, False, True],
+    ).reset_index(drop=True)
+    logger.info("Sorted %d words by length, score, and word", len(sorted_df))
+    return sorted_df
 
 
 if __name__ == "__main__":
