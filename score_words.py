@@ -81,17 +81,22 @@ def run(output_csv=OUTPUT_CSV):
     logger.info("Done")
 
 def add_lengths(df):
-    """Add a ``length`` column containing the length of each ``word`` value.
+    """Add a ``length`` column and drop words shorter than 3 characters.
 
     Args:
         df: DataFrame with a ``word`` column.
 
     Returns:
-        The same DataFrame with a new integer ``length`` column.
+        A filtered copy of ``df`` with a new integer ``length`` column.
     """
     df["length"] = df["word"].str.len()
-    logger.info("Added length column for %d words", len(df))
-    return df
+    filtered = df[df["length"] >= 3].copy()
+    logger.info(
+        "Added length column and kept %d of %d words with length >= 3",
+        len(filtered),
+        len(df),
+    )
+    return filtered
 
 def load_clues(zip_url, file_in_zip):
     """Download a zip archive and read one TSV member into a DataFrame.
