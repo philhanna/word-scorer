@@ -162,22 +162,23 @@ def add_scores(df):
 
     Word usage follows Zipf's law: a few words appear constantly while most
     appear rarely. A raw count would let common words dominate, so the score
-    is log-scaled and normalized against the most-used word::
+    is log-scaled and normalized against the number of distinct words that
+    share the same length::
 
         score = ln(count + 1) / ln(count_max + 1)
 
-    The +1 keeps the logarithm defined for a count of zero. The most-used
-    word scores 1.0; every other word falls between 0 and 1.
+    Here, ``count_max`` is the number of words whose length matches the
+    current word. The +1 keeps the logarithm defined for a count of zero.
 
     Args:
-        df: DataFrame with a ``count`` column.
+        df: DataFrame with ``word`` and ``count`` columns.
 
     Returns:
         The same DataFrame with a new ``score`` column.
     """
-    count_max = df["count"].max()
+    count_max = df["word"].str.len().map(df["word"].str.len().value_counts())
     df["score"] = np.log(df["count"] + 1) / np.log(count_max + 1)
-    logger.info("Scored %d words (max count %d scores 1.0)", len(df), count_max)
+    logger.info("Scored %d words using same-length word counts", len(df))
     return df
 
 

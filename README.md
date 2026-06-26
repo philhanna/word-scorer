@@ -23,16 +23,17 @@ four steps:
 
 4. **Assign a log-scaled score.** Word usage follows Zipf's law: a handful of
    words are used constantly while most are used rarely. A raw count would make
-   common words dominate, so the score is log-scaled:
+   common words dominate, so the score is log-scaled using the number of
+   distinct words of the same length as the normalization term:
 
    ```
    score = ln(count + 1) / ln(count_max + 1)
    ```
 
-   This reflects diminishing returns — once a publisher has used a word a few
-   times it is "acceptable," and using it 100 more times doesn't make it
-   drastically more so. The most-used word scores `1.0`; every other word falls
-   between `0` and `1`.
+   Here `count_max` is the number of distinct words whose length matches the
+   current word. This reflects diminishing returns — once a publisher has used
+   a word a few times it is "acceptable," and using it 100 more times doesn't
+   make it drastically more so.
 
 The result is written to `scored_words.csv` with columns `word`, `count`, and
 `score`.
